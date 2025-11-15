@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Marketing Médico - Pro App</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+
+    <!-- Chart.js CDN (para Métricas) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tone.js CDN (para sonidos de claqueta) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <!-- Script de iconos (no-module) para compatibilidad local -->
+    <script src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+
+    <style>
+        /* Variables de CSS para los colores y fuentes de la marca */
+        :root {
+            --brand-purple: #6A0DAD;
+            --brand-accent: #B184F5;
+            --font-title: 'Bebas Neue', 'Colbética', sans-serif;
+            --font-subtitle: 'Montserrat', sans-serif;
+            --font-pixel: 'VT323', monospace;
+        }
+
+        /* --- ESTILOS DEL PRELOADER (PANTALLA DE CARGA INICIAL) --- */
+        .preloader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #111827; /* bg-gray-900 */
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        .preloader-logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .preloader-title {
+            font-family: var(--font-title), 'Bebas Neue', sans-serif;
+            font-size: 4rem; /* 64px */
+            color: var(--brand-purple, #6A0DAD);
+            line-height: 1;
+        }
+        .preloader-subtitle {
+            font-family: var(--font-subtitle), 'Montserrat', sans-serif;
+            font-size: 1.125rem; /* 18px */
+            color: #D1D5DB; /* text-gray-300 */
+            margin-top: -0.5rem; /* -mt-2 */
+        }
+        .preloader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #374151; /* border-gray-700 */
+            border-top-color: var(--brand-accent, #B184F5);
+            border-radius: 50%;
+            animation: preloader-spin 1s linear infinite;
+        }
+        /* CAMBIO v5: Texto de estado del preloader */
+        .preloader-status {
+            font-family: var(--font-subtitle), 'Montserrat', sans-serif;
+            color: #9CA3AF; /* text-gray-500 */
+            margin-top: 1rem;
+        }
+        @keyframes preloader-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .preloader-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* --- FIN DE ESTILOS DEL PRELOADER --- */
+
+        /* Clases de utilidad para fuentes */
+        .font-title { font-family: var(--font-title); }
+        .font-subtitle { font-family: var(--font-subtitle); }
+        .font-pixel { font-family: var(--font-pixel); }
+
+        /* Estilos de la aplicación principal */
+        body {
+            font-family: var(--font-subtitle);
+            background-color: #111827; /* bg-gray-900 */
+            color: #F9FAFB; /* text-gray-100 */
+        }
+
+        /* Estilo para la barra lateral de navegación */
+        .sidebar-icon {
+            stroke: var(--brand-accent);
+        }
+        .sidebar-link.active {
+            background-color: var(--brand-purple);
+            color: white;
+            border-radius: 8px;
+        }
+        .sidebar-link.active ion-icon {
+            stroke: white; 
+        }
+        .sidebar-link ion-icon {
+             color: var(--brand-accent);
+             min-width: 24px; 
+        }
+        .sidebar-link.active ion-icon {
+            color: white;
+        }
+
+        /* Ocultar vistas de sección por defecto */
+        [data-view] { display: none; }
+        [data-view].active { display: block; }
+
+        /* Estilos de la Claqueta */
+        .claqueta-stick { background-color: #000; transform: skew(-15deg); }
+        .claqueta-slate {
+            background-color: white;
+            color: black;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .claqueta-input, .claqueta-select {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #D1D5DB; 
+            color: black;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        .claqueta-input:focus, .claqueta-select:focus { outline: none; border-bottom-color: var(--brand-purple); }
+        .claqueta-select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .claqueta-label {
+            font-family: var(--font-subtitle);
+            font-weight: 700;
+            font-size: 0.75rem; /* text-xs */
+            color: #4B5563; /* text-gray-600 */
+            letter-spacing: 0.05em; /* tracking-wider */
+            text-transform: uppercase;
+        }
+        .claqueta-setting-btn {
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-family: var(--font-subtitle);
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+        .claqueta-setting-btn.active { background-color: var(--brand-purple) !important; color: white !important; }
+
+        /* Superposiciones (Color Bars, Countdown) */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999; /* z-index alto */
+            display: none; 
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Barras de color (CSS) */
+        #color-bars-overlay { background: #111; }
+        .color-bars-container { display: flex; width: 100%; height: 100%; flex-direction: column; }
+        .color-bars-top { display: flex; flex-grow: 8; width: 100%; }
+        .color-bars-bottom { display: flex; flex-grow: 2; width: 100%; }
+        .color-bar { height: 100%; }
+        .bar-white { background-color: #C0C0C0; }
+        .bar-yellow { background-color: #C0C000; }
+        .bar-cyan { background-color: #00C0C0; }
+        .bar-green { background-color: #00C000; }
+        .bar-magenta { background-color: #C000C0; }
+        .bar-red { background-color: #C00000; }
+        .bar-blue { background-color: #0000C0; }
+        .bar-black { background-color: #000000; }
+        .bar-purple { background-color: var(--brand-purple); }
+        /* Logo superpuesto en las barras */
+        .color-bars-logo-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .color-bars-logo-text-title {
+            font-family: var(--font-title);
+            font-size: 9vh; /* Ajustado a vh para ser responsivo */
+            color: white;
+            line-height: 1;
+        }
+        .color-bars-logo-text-subtitle {
+            font-family: var(--font-subtitle);
+            font-size: 3vh;
+            color: white;
+            margin-top: -0.5vh;
+        }
+
+
+        /* Botón de menú hamburguesa */
+        #sidebar-toggle {
+            position: fixed;
+            top: 1.5rem; /* p-6 */
+            left: 1.5rem; /* p-6 */
+            z-index: 40; 
+            background-color: rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Inputs generales */
+        .form-input, .form-select, .form-textarea {
+            background-color: #374151; /* bg-gray-700 */
+            border: 1px solid #4B5563; /* border-gray-600 */
+            border-radius: 8px;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--brand-accent);
+            box-shadow: 0 0 0 2px var(--brand-purple);
+        }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 700; color: #D1D5DB; }
+        .btn {
+            font-family: var(--font-subtitle);
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary { background-color: var(--brand-purple); color: white; }
+        .btn-primary:hover { background-color: #5a0b9e; }
+        .btn-secondary { background-color: #4B5563; color: white; }
+        .btn-secondary:hover { background-color: #5a6578; }
+        .btn-danger { background-color: #DC2626; color: white; }
+        .btn-danger:hover { background-color: #B91C1C; }
+
+        /* Timer de grabación */
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #EF4444; /* bg-red-500 */
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* Modal de Confirmación */
+        #confirmation-modal {
+            display: none; 
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #1f2937; /* bg-gray-800 */
+            margin: 15% auto;
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid #374151;
+        }
+        .modal-title { font-family: var(--font-title); font-size: 1.8rem; color: white; }
+        .modal-body { color: #d1d5db; margin-top: 1rem; margin-bottom: 1.5rem; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; }
+
+        /* Custom Select Dropdown */
+        .custom-select-container { position: relative; }
+        .custom-select-trigger { cursor: pointer; position: relative; user-select: none; }
+        .custom-select-trigger::after {
+            content: '▼';
+            font-size: 0.6rem;
+            color: #9CA3AF;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .claqueta-select.custom-select-trigger::after { color: #9CA3AF; right: 0; }
+        .form-select.custom-select-trigger::after { color: #D1D5DB; }
+
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 60; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .custom-select-option { padding: 0.75rem 1rem; color: white; cursor: pointer; user-select: none; font-family: var(--font-subtitle); }
+        .custom-select-option:hover { background-color: var(--brand-purple); }
+        .custom-select-option.placeholder { color: #9CA3AF; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <!-- 
+      ==================================================================
+      PANTALLA DE CARGA INICIAL (PRELOADER)
+      ================================================================== 
+    -->
+    <div id="page-preloader" class="preloader-container">
+        <div class="preloader-logo-container">
+            <h1 class="preloader-title">Active</h1>
+            <h2 class="preloader-subtitle">Marketing Médico</h2>
+        </div>
+        <div class="preloader-spinner"></div>
+        <p id="preloader-status" class="preloader-status">Cargando aplicación...</p>
+    </div>
+    <!-- FIN DEL PRELOADER -->
+
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmation-modal">
+        <div class="modal-content">
+            <h3 id="modal-title" class="modal-title">Confirmar Acción</h3>
+            <p id="modal-body" class="modal-body">¿Estás seguro de que deseas realizar esta acción?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="import-script-file" class="hidden" accept=".txt,.json">
+
+
+    <!-- Superposición de Barras de Color -->
+    <div id="color-bars-overlay" class="fullscreen-overlay">
+        <div class="color-bars-container">
+            <div class="color-bars-top">
+                <div class="color-bar bar-white" style="width: 14.28%;"></div>
+                <div class="color-bar bar-yellow" style="width: 14.28%;"></div>
+                <div class="color-bar bar-cyan" style="width: 14.28%;"></div>
+                <div class="color-bar bar-green" style="width: 14.28%;"></div>
+                <div class="color-bar bar-magenta" style="width: 14.28%;"></div>
+                <div class="color-bar bar-red" style="width: 14.28%;"></div>
+                <div class="color-bar bar-blue" style="width: 14.28%;"></div>
+            </div>
+            <div class="color-bars-bottom">
+                <div class="color-bar bar-blue" style="width: 14.28%;"></div>
+                <div class="color-bar bar-black" style="width: 14.28%;"></div>
+                <div class="color-bar bar-magenta" style="width: 14.28%;"></div>
+                <div class="color-bar bar-black" style="width: 14.28%;"></div>
+                <div class="color-bar bar-cyan" style="width: 14.28%;"></div>
+                <div class="color-bar bar-black" style="width: 14.28%;"></div>
+                <div class="color-bar bar-white" style="width: 14.28%;"></div>
+            </div>
+        </div>
+        <!-- Logo sobre las barras -->
+        <div class="color-bars-logo-overlay">
+            <div class="text-center">
+                <h1 class="color-bars-logo-text-title">Active</h1>
+                <h2 class="color-bars-logo-text-subtitle">Marketing Médico</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Superposición de Cuenta Regresiva -->
+    <div id="countdown-overlay" class="fullscreen-overlay bg-black bg-opacity-75">
+        <span id="countdown-number" class="font-title text-white" style="font-size: 30vh;"></span>
+    </div>
+
+    <!-- 1. Barra Lateral de Navegación -->
+    <nav id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 space-y-2 overflow-y-auto shadow-lg md:border-r md:border-gray-800 hidden md:block">
+        <!-- Logo -->
+        <div class="text-center p-4 mb-4">
+            <h1 class="font-title text-5xl" style="color: var(--brand-purple);">Active</h1>
+            <h2 class="font-subtitle text-lg text-gray-300 -mt-2">Marketing Médico</h2>
+        </div>
+
+        <!-- Enlaces de Navegación -->
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="CLAQUETA">
+            <ion-icon name="videocam-outline"></ion-icon>
+            <span>Claqueta Digital</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="RODAJES">
+            <ion-icon name="camera-outline"></ion-icon>
+            <span>Rodajes / Checklist</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="SHOTLIST">
+            <ion-icon name="list-outline"></ion-icon>
+            <span>Shotlist / Planos</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="GUIONES">
+            <ion-icon name="document-text-outline"></ion-icon>
+            <span>Guiones</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="HISTORIAL">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Historial Grabaciones</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="METRICAS">
+            <ion-icon name="stats-chart-outline"></ion-icon>
+            <span>Métricas</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="MOODBOARD">
+            <ion-icon name="images-outline"></ion-icon>
+            <span>Moodboard</span>
+        </a>
+        <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="CLIENT_ON_SET">
+            <ion-icon name="eye-outline"></ion-icon>
+            <span>Modo Cliente On Set</span>
+        </a>
+
+        <div class="border-t border-gray-700 pt-4">
+            <a href="#" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors" data-target="CONFIGURACIONES">
+                <ion-icon name="settings-outline"></ion-icon>
+                <span>Configuraciones</span>
+            </a>
+            <button id="fullscreen-app-btn" class="sidebar-link flex items-center space-x-3 p-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors w-full mt-2">
+                <ion-icon name="expand-outline"></ion-icon>
+                <span>Pantalla Completa (App)</span>
+            </button>
+        </div>
+
+    </nav>
+
+    <!-- 2. Contenido Principal -->
+    <main id="main-content" class="flex-1 overflow-y-auto p-6 md:p-10">
+        
+        <!-- Contenedor 'relative' interno -->
+        <div class="relative">
+
+            <!-- PANTALLA DE CARGA INTERNA (APP LOADER) -->
+            <div id="app-loader" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-40 hidden">
+                 <div class="preloader-spinner"></div>
+            </div>
+            <!-- FIN DEL APP LOADER -->
+
+            <!-- Botón para ocultar/mostrar menú -->
+            <button id="sidebar-toggle" class="btn btn-secondary p-2 rounded-lg">
+                <ion-icon name="menu-outline"></ion-icon>
+            </button>
+
+            <!-- ================================================================== -->
+            <!-- VISTA: CLAQUETA DIGITAL (CLAQUETA) -->
+            <!-- ================================================================== -->
+            <div id="view-CLAQUETA" data-view="CLAQUETA" class="max-w-4xl mx-auto">
+                
+                <div id="claqueta-container" class="claqueta-container select-none bg-gray-900 p-1 md:p-4 rounded-lg">
+                    
+                    <div id="clapper-stick" class="h-16 w-full flex overflow-hidden rounded-t-lg cursor-pointer active:translate-y-1 transition-transform">
+                        <div class="claqueta-stick w-1/6 h-full bg-black"></div>
+                        <div class="claqueta-stick w-1/6 h-full bg-white"></div>
+                        <div class="claqueta-stick w-1/6 h-full bg-black"></div>
+                        <div class="claqueta-stick w-1/6 h-full bg-white"></div>
+                        <div class="claqueta-stick w-1/6 h-full bg-black"></div>
+                        <div class="claqueta-stick w-1/6 h-full bg-white"></div>
+                    </div>
+
+                    <div class="claqueta-slate p-6 grid grid-cols-3 gap-x-6 gap-y-4">
+                        
+                        <div class="col-span-1 space-y-4">
+                            <div class="text-left">
+                                <h1 class="font-title text-5xl" style="color: var(--brand-purple);">Active</h1>
+                                <h2 class="font-subtitle text-xl font-bold text-black -mt-2">Marketing Médico</h2>
+                            </div>
+                            
+                            <div>
+                                <label class="claqueta-label" for="claqueta-video-type">Tipo de Video</label>
+                                <div class="custom-select-container">
+                                    <select id="claqueta-video-type" class="hidden"></select>
+                                    <div class="custom-select-trigger claqueta-select w-full font-title text-8xl text-purple-700 text-center py-4"></div>
+                                    <div class="custom-select-options hidden"></div>
+                                </div>
+                                <input id="claqueta-video-type-custom" type="text" class="claqueta-input w-full font-title text-8xl text-purple-700 text-center mt-1 hidden py-4" placeholder="TIPO">
+                            </div>
+
+                            <div>
+                                <label class="claqueta-label" for="claqueta-video-title">Título del Video</label>
+                                <input id="claqueta-video-title" type="text" class="claqueta-input w-full text-xl font-bold" value="Título del proyecto">
+                            </div>
+                            
+                            <div>
+                                <label class="claqueta-label" for="claqueta-director">Director</label>
+                                <div class="custom-select-container">
+                                    <select id="claqueta-director" class="hidden"></select>
+                                    <div class="custom-select-trigger claqueta-select w-full text-xl font-bold"></div>
+                                    <div class="custom-select-options hidden"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 flex flex-col items-center justify-center space-y-4 border-l border-r border-gray-300 px-4">
+                            <div class="text-center w-full">
+                                <label class="claqueta-label">Escena</label>
+                                <div class="flex items-center justify-center">
+                                    <button id="scene-minus" class="text-4xl p-2 text-gray-400 hover:text-purple-700">-</button>
+                                    <span id="scene-number" class="font-title text-9xl text-purple-700 mx-4">001</span>
+                                    <button id="scene-plus" class="text-4xl p-2 text-gray-400 hover:text-purple-700">+</button>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-300 w-full"></div>
+                            <div class="text-center w-full">
+                                <label class="claqueta-label">Toma / Intento</label>
+                                <div class="flex items-center justify-center">
+                                    <button id="take-minus" class="text-4xl p-2 text-gray-400 hover:text-purple-700">-</button>
+                                    <span id="take-number" class="font-title text-9xl text-purple-700 mx-4">01</span>
+                                    <button id="take-plus" class="text-4xl p-2 text-gray-400 hover:text-purple-700">+</button>
+                                </div>
+                                <button id="take-reset" class="claqueta-label hover:text-purple-700">Resetear Toma</button>
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 space-y-4">
+                            <div>
+                                <label class="claqueta-label">Fecha</label>
+                                <div id="claqueta-date" class="text-xl font-bold text-black"></div>
+                            </div>
+                            <div>
+                                <label class="claqueta-label">Hora</label>
+                                <div id="claqueta-time" class="text-xl font-bold text-black"></div>
+                            </div>
+                            <div class="border-t border-gray-300 pt-4 space-y-4">
+                                <div>
+                                    <label class="claqueta-label">FPS</label>
+                                    <div class="flex space-x-2">
+                                        <button class="claqueta-setting-btn btn-fps bg-gray-200 text-gray-700" data-value="24">24</button>
+                                        <button class="claqueta-setting-btn btn-fps bg-gray-200 text-gray-700" data-value="30">30</button>
+                                        <button class="claqueta-setting-btn btn-fps bg-gray-200 text-gray-700" data-value="60">60</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="claqueta-label">Calidad</label>
+                                    <div class="flex space-x-2">
+                                        <button class="claqueta-setting-btn btn-quality bg-gray-200 text-gray-700" data-value="HD">HD</button>
+                                        <button class="claqueta-setting-btn btn-quality bg-gray-200 text-gray-700" data-value="FHD">FHD</button>
+                                        <button class="claqueta-setting-btn btn-quality bg-gray-200 text-gray-700" data-value="4K">4K</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="recording-timer-container" class="pt-4 border-t border-gray-300 invisible">
+                                <label class="claqueta-label">Timer Grabación</label>
+                                <div class="flex items-center space-x-2">
+                                    <div class="recording-dot"></div>
+                                    <span id="recording-timer" class="font-title text-4xl text-red-500">00:00:00</span>
+                                </div>
+                                <button id="stop-recording-btn" class="btn btn-danger text-xs px-3 py-1 mt-2 w-full">Dejar de Grabar</button>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2 text-center border-t border-gray-300 pt-4 mt-4">
+                            <label class="claqueta-label" for="claqueta-client">Cliente</label>
+                            <div class="custom-select-container">
+                                <select id="claqueta-client" class="hidden"></select>
+                                <div class="custom-select-trigger claqueta-select w-full text-5xl font-bold text-center"></div>
+                                <div class="custom-select-options hidden"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 border-t border-gray-300 pt-4 mt-4 flex flex-col justify-end items-center">
+                            <label class="flex items-center space-x-2 claqueta-label text-gray-700 cursor-pointer">
+                                <input type="checkbox" id="setting-countdown" class="form-checkbox rounded text-purple-600" checked>
+                                <span>Countdown (3s)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 claqueta-label text-gray-700 cursor-pointer mt-2">
+                                <input type="checkbox" id="setting-colorbars" class="form-checkbox rounded text-purple-600" checked>
+                                <span>Color Bars</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="clack-button" class="hidden">CLACK</button>
+            </div>
+
+            <!-- VISTA: RODAJE / CHECKLIST (RODAJES) -->
+            <div id="view-RODAJES" data-view="RODAJES">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-title text-3xl text-white">Gestor de Rodajes</h2>
+                    <button id="new-shoot-btn" class="btn btn-primary">
+                        <ion-icon name="add-outline" class="mr-2"></ion-icon>
+                        Nuevo Rodaje
+                    </button>
+                </div>
+                <div id="new-shoot-form" class="bg-gray-800 p-6 rounded-lg mb-8 hidden">
+                    <h3 class="font-title text-2xl text-white mb-4">Detalles del Rodaje</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="shoot-client" class="form-label">Cliente</label>
+                            <div class="custom-select-container">
+                                <select id="shoot-client" class="hidden"></select>
+                                <div class="custom-select-trigger form-select w-full"></div>
+                                <div class="custom-select-options hidden"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="shoot-date" class="form-label">Fecha del Rodaje</label>
+                            <input type="date" id="shoot-date" class="form-input">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Tipos de Contenido</label>
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" class="form-checkbox rounded text-purple-600" value="Anuncios"> <span>Anuncios</span></label>
+                                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" class="form-checkbox rounded text-purple-600" value="Videos"> <span>Videos</span></label>
+                                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" class="form-checkbox rounded text-purple-600" value="Reels"> <span>Reels</span></label>
+                                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" class="form-checkbox rounded text-purple-600" value="TikToks"> <span>TikToks</span></label>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <label for="shoot-notes" class="form-label">Notas Adicionales</label>
+                            <textarea id="shoot-notes" rows="4" class="form-textarea" placeholder="Briefing, locación, puntos clave..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-4">
+                        <button id="cancel-shoot-btn" class="btn btn-secondary">Cancelar</button>
+                        <button id="save-shoot-btn" class="btn btn-primary">Guardar Rodaje</button>
+                    </div>
+                </div>
+                <div id="shoots-list" class="space-y-4">
+                    <!-- Los rodajes se agregarán aquí dinámicamente -->
+                </div>
+            </div>
+
+            <!-- VISTA: SHOTLIST / PLANOS (SHOTLIST) -->
+            <div id="view-SHOTLIST" data-view="SHOTLIST">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-title text-3xl text-white">Shotlist / Plan de Planos</h2>
+                    <button id="add-shot-btn" class="btn btn-primary">
+                        <ion-icon name="add-outline" class="mr-2"></ion-icon>
+                        Añadir Plano
+                    </button>
+                </div>
+                <div id="new-shot-form" class="bg-gray-800 p-6 rounded-lg mb-8 hidden">
+                    <h3 class="font-title text-2xl text-white mb-4">Nuevo Plano</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="shot-type" class="form-label">Tipo de Plano</label>
+                            <div class="custom-select-container">
+                                <select id="shot-type" class="hidden">
+                                    <option value="Plano General">Plano General</option>
+                                    <option value="Plano Medio">Plano Medio</option>
+                                    <option value="Close-up">Close-up</option>
+                                    <option value="Plano Detalle">Plano Detalle</option>
+                                    <option value="Recurso (B-Roll)">Recurso (B-Roll)</option>
+                                </select>
+                                <div class="custom-select-trigger form-select w-full" data-value="Plano General">Plano General</div>
+                                <div class="custom-select-options hidden">
+                                    <div class="custom-select-option" data-value="Plano General">Plano General</div>
+                                    <div class="custom-select-option" data-value="Plano Medio">Plano Medio</div>
+                                    <div class="custom-select-option" data-value="Close-up">Close-up</div>
+                                    <div class="custom-select-option" data-value="Plano Detalle">Plano Detalle</div>
+                                    <div class="custom-select-option" data-value="Recurso (B-Roll)">Recurso (B-Roll)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="shot-duration" class="form-label">Duración Estimada (seg)</label>
+                            <input type="number" id="shot-duration" class="form-input" placeholder="Ej: 15">
+                        </div>
+                        <div class="col-span-2">
+                            <label for="shot-description" class="form-label">Descripción</label>
+                            <textarea id="shot-description" rows="3" class="form-textarea" placeholder="Describir la acción, encuadre, etc."></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label for="shot-notes" class="form-label">Notas</label>
+                            <input type="text" id="shot-notes" class="form-input" placeholder="Ej: Lente 50mm, luz cenital">
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-4">
+                        <button id="cancel-shot-btn" class="btn btn-secondary">Cancelar</button>
+                        <button id="save-shot-btn" class="btn btn-primary">Guardar Plano</button>
+                    </div>
+                </div>
+                <div id="shotlist-container" class="bg-gray-800 rounded-lg overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">#</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Tipo</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Descripción</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Dur.</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Notas</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Estado</th>
+                                <th class="p-4 font-bold uppercase text-sm text-gray-300">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shotlist-body" class="divide-y divide-gray-700">
+                            <!-- Planos se insertarán aquí -->
+                        </tbody>
+                    </table>
+                    <div id="shotlist-empty" class="text-center p-8 text-gray-500">
+                        Aún no hay planos. ¡Añade el primero!
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: GUIONES (GUIONES) -->
+            <div id="view-GUIONES" data-view="GUIONES">
+                <h2 class="font-title text-3xl text-white mb-6">Guiones</h2>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="w-full md:w-1/3">
+                        <h3 class="font-title text-2xl text-white mb-4">Historial de Guiones</h3>
+                        <div class="flex gap-2 mb-4">
+                            <button id="new-script-btn" class="btn btn-primary flex-1">
+                                <ion-icon name="add-outline" class="mr-2"></ion-icon>
+                                Nuevo
+                            </button>
+                            <button id="import-script-btn" class="btn btn-secondary flex-1">
+                                <ion-icon name="cloud-upload-outline" class="mr-2"></ion-icon>
+                                Importar
+                            </button>
+                        </div>
+                        <ul id="script-list" class="space-y-2 max-h-[60vh] overflow-y-auto">
+                            <!-- Los guiones se listarán aquí -->
+                        </ul>
+                    </div>
+                    <div class="w-full md:w-2/3">
+                        <div id="script-editor-container" class="bg-gray-800 p-6 rounded-lg">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-title text-2xl text-white">Editor de Guion</h3>
+                                <div class="flex gap-4 items-center">
+                                    <span id="save-script-feedback" class="text-green-400 text-sm italic hidden">¡Guardado!</span>
+                                    <button id="delete-script-btn" class="btn btn-danger">Eliminar</button>
+                                    <button id="save-script-btn" class="btn btn-primary">Guardar Guion</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="script-title" class="form-label font-title text-xl">Título</label>
+                                <input type="text" id="script-title" class="form-input bg-gray-700 text-2xl font-bold mb-6" placeholder="Título del Guion...">
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="script-hook" class="form-label font-title text-xl text-purple-300">HOOK (Gancho)</label>
+                                    <textarea id="script-hook" class="form-textarea w-full" rows="4" placeholder="Escribe el gancho inicial (primeros 3 segundos)..."></textarea>
+                                </div>
+                                <div>
+                                    <label for="script-body" class="form-label font-title text-xl text-purple-300">CUERPO (Desarrollo)</label>
+                                    <textarea id="script-body" class="form-textarea w-full" rows="12" placeholder="Desarrolla el contenido principal del video..."></textarea>
+                                </div>
+                                <div>
+                                    <label for="script-cta" class="form-label font-title text-xl text-purple-300">CTA (Llamado a la Acción)</label>
+                                    <textarea id="script-cta" class="form-textarea w-full" rows="3" placeholder="Escribe el llamado a la acción final..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="script-empty-state" class="hidden text-center p-10 bg-gray-800 rounded-lg">
+                            <p class="text-gray-400">Selecciona un guion o crea uno nuevo para empezar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA HISTORIAL DE GRABACIONES (HISTORIAL) -->
+            <div id="view-HISTORIAL" data-view="HISTORIAL">
+                <h2 class="font-title text-3xl text-white mb-6">Historial de Grabaciones</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-1 bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Tomas por Cliente</h3>
+                        <div class="max-w-xs mx-auto">
+                            <canvas id="history-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Registros</h3>
+                        <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-700 sticky top-0">
+                                    <tr>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Escena</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Toma</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Cliente</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Director</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Título</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Fecha</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Tipo</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">FPS</th>
+                                        <th class="p-3 font-bold uppercase text-sm text-gray-300">Calidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body" class="divide-y divide-gray-700">
+                                    <!-- Registros se insertarán aquí -->
+                                </tbody>
+                            </table>
+                            <div id="history-empty" class="text-center p-8 text-gray-500">
+                                No hay grabaciones registradas. ¡Ve a la claqueta y haz "clack"!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: MÉTRICAS (METRICAS) -->
+            <div id="view-METRICAS" data-view="METRICAS">
+                <h2 class="font-title text-3xl text-white mb-6">Métricas de Resultados</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Registrar Métricas</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="metric-ctr" class="form-label">CTR (%)</label>
+                                <input type="number" id="metric-ctr" class="form-input" placeholder="2.5">
+                            </div>
+                            <div>
+                                <label for="metric-cpm" class="form-label">CPM ($)</label>
+                                <input type="number" id="metric-cpm" class="form-input" placeholder="10.50">
+                            </div>
+                            <div>
+                                <label for="metric-retention-3s" class="form-label">Retención 3s (%)</label>
+                                <input type="number" id="metric-retention-3s" class="form-input" placeholder="70">
+                            </div>
+                            <div>
+                                <label for="metric-retention-10s" class="form-label">Retención 10s (%)</label>
+                                <input type="number" id="metric-retention-10s" class="form-input" placeholder="45">
+                            </div>
+                            <div>
+                                <label for="metric-hook-rate" class="form-label">Hook Rate (%)</label>
+                                <input type="number" id="metric-hook-rate" class="form-input" placeholder="80">
+                            </div>
+                            <div>
+                                <label for="metric-cpr" class="form-label">Costo x Resultado ($)</label>
+                                <input type="number" id="metric-cpr" class="form-input" placeholder="1.20">
+                            </div>
+                        </div>
+                        <button id="update-chart-btn" class="btn btn-primary mt-6 w-full">Actualizar Gráfico</button>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Rendimiento Visual</h3>
+                        <canvas id="metrics-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: MOODBOARD (MOODBOARD) -->
+            <div id="view-MOODBOARD" data-view="MOODBOARD">
+                <h2 class="font-title text-3xl text-white mb-6">Moodboard / Referencias</h2>
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <div class="flex gap-4 mb-6">
+                        <input type="text" id="moodboard-url" class="form-input flex-1" placeholder="Pega la URL de una imagen de referencia...">
+                        <button id="add-moodboard-image" class="btn btn-primary">Añadir</button>
+                    </div>
+                    <div id="moodboard-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- Imágenes del moodboard se añadirán aquí -->
+                    </div>
+                    <div id="moodboard-empty" class="text-center p-8 text-gray-500">
+                        Tu moodboard está vacío. Añade URLs de imágenes.
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: MODO CLIENTE (CLIENT_ON_SET) -->
+            <div id="view-CLIENT_ON_SET" data-view="CLIENT_ON_SET">
+                <div class="text-center mb-8">
+                    <h1 class="font-title text-5xl" style="color: var(--brand-purple);">Active</h1>
+                    <h2 class="font-subtitle text-2xl text-gray-300 -mt-2">Marketing Médico</h2>
+                    <h3 class="font-title text-4xl text-white mt-4">Reporte de Rodaje</h3>
+                </div>
+                <div class="max-w-3xl mx-auto bg-gray-800 p-8 rounded-lg">
+                    <div class="text-center mb-6">
+                        <h4 class="font-subtitle text-xl text-gray-400">Progreso del Shotlist</h4>
+                        <div class="w-full bg-gray-700 rounded-full h-8 mt-2">
+                            <div id="client-progress-bar" class="bg-purple-600 h-8 rounded-full text-white font-bold flex items-center justify-center" style="width: 0%;">
+                                <span id="client-progress-text">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 text-center">
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <span class="font-title text-6xl text-green-400" id="client-scenes-completed">0</span>
+                            <p class="font-subtitle text-gray-300">Planos Completados</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <span class="font-title text-6xl text-yellow-400" id="client-scenes-pending">0</span>
+                            <p class="font-subtitle text-gray-300">Planos Pendientes</p>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <h4 class="font-title text-2xl text-white mb-4">Notas para el Cliente</h4>
+                        <div id="client-notes" class="bg-gray-700 p-4 rounded-lg min-h-[100px] text-gray-300">
+                            <p>¡Bienvenidos al rodaje! Estamos trabajando en los primeros planos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA: CONFIGURACIONES (CONFIGURACIONES) -->
+            <div id="view-CONFIGURACIONES" data-view="CONFIGURACIONES">
+                <h2 class="font-title text-3xl text-white mb-6">Configuraciones Generales</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Gestor de Clientes</h3>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="new-client-name" class="form-input flex-1" placeholder="Nombre del Cliente">
+                            <button id="add-client-btn" class="btn btn-primary">Añadir</button>
+                        </div>
+                        <ul id="client-list" class="space-y-2">
+                            <!-- Clientes se añaden aquí -->
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Gestor de Directores</h3>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="new-director-name" class="form-input flex-1" placeholder="Nombre del Director">
+                            <button id="add-director-btn" class="btn btn-primary">Añadir</button>
+                        </div>
+                        <ul id="director-list" class="space-y-2">
+                            <!-- Directores se añaden aquí -->
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Gestor de Equipos</h3>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="new-equipment-name" class="form-input flex-1" placeholder="Nombre del Equipo">
+                            <button id="add-equipment-btn" class="btn btn-primary">Añadir</button>
+                        </div>
+                        <ul id="equipment-list" class="space-y-2">
+                            <!-- Equipos se añaden aquí -->
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="font-title text-2xl text-white mb-4">Gestor de Tipos de Video</h3>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="new-video-type" class="form-input flex-1" placeholder="Nuevo Tipo (ej: REEL)">
+                            <button id="add-video-type-btn" class="btn btn-primary">Añadir</button>
+                        </div>
+                        <ul id="video-type-list" class="space-y-2">
+                            <!-- Tipos de video se añaden aquí -->
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg md:col-span-2">
+                        <h3 class="font-title text-2xl text-white mb-4">Gestor de Base de Datos</h3>
+                        <p class="text-gray-400 mb-4">Guarda o carga toda la configuración de tu app.</p>
+                        <div class="flex gap-4">
+                            <button id="export-db-btn" class="btn btn-primary">Exportar JSON</button>
+                            <button id="import-db-btn" class="btn btn-secondary">Importar JSON</button>
+                            <input type="file" id="import-db-file" class="hidden" accept=".json">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- FIN del wrapper 'relative' -->
+
+    </main>
+
+    <!-- 
+      ==================================================================
+      JavaScript Principal de la Aplicación 
+      CAMBIO v5: Lógica de carga robusta
+      ==================================================================
+    -->
+    <script>
+        // --- ESTADO Y LÓGICA DE LA APLICACIÓN ---
+        
+        // Objeto global de la aplicación
+        const app = {
+            state: {
+                currentView: 'CLAQUETA',
+                claqueta: {
+                    scene: 1,
+                    take: 1,
+                    title: 'Título del proyecto',
+                    clientId: '',
+                    directorId: '',
+                    videoType: 'AN (Anuncio)',
+                    fps: '24',
+                    quality: 'FHD'
+                },
+                settings: {
+                    clients: [],
+                    directors: [],
+                    equipment: [],
+                    videoTypes: ['AN (Anuncio)', 'MP (Marca Personal)', 'UGC', 'BSL', 'OTRO...']
+                },
+                shoots: [],
+                shotlist: [],
+                scripts: [],
+                currentScriptId: null,
+                recordingHistory: [],
+                metrics: {
+                    ctr: 0, cpm: 0, retention3s: 0, retention10s: 0, hookRate: 0, cpr: 0
+                },
+                moodboard: [],
+                config: {
+                    countdown: true,
+                    colorBars: true,
+                }
+            },
+            
+            // --- INICIALIZACIÓN ---
+            init() {
+                console.log("Iniciando Active Marketing Médico App...");
+                
+                this.elements.appLoader = document.getElementById('app-loader');
+
+                // Envolver cada inicialización en try...catch para máxima robustez
+                try { this.loadState(); } catch (e) { console.error('Error loading state:', e); }
+                try { this.initNavigation(); } catch (e) { console.error('Error initNavigation:', e); }
+                try { this.initSidebarToggle(); } catch (e) { console.error('Error initSidebarToggle:', e); }
+                try { this.initClaqueta(); } catch (e) { console.error('Error initClaqueta:', e); }
+                try { this.initSettings(); } catch (e) { console.error('Error initSettings:', e); }
+                try { this.initRodajes(); } catch (e) { console.error('Error initRodajes:', e); }
+                try { this.initShotlist(); } catch (e) { console.error('Error initShotlist:', e); }
+                try { this.initGuiones(); } catch (e) { console.error('Error initGuIONES:', e); }
+                try { this.initMetrics(); } catch (e) { console.error('Error initMetrics:', e); }
+                try { this.initMoodboard(); } catch (e) { console.error('Error initMoodboard:', e); }
+                try { this.initClientOnSet(); } catch (e) { console.error('Error initClientOnSet:', e); }
+                try { this.initFullscreen(); } catch (e) { console.error('Error initFullscreen:', e); }
+                try { this.initSound(); } catch (e) { console.error('Error initSound:', e); }
+                try { this.initHistorial(); } catch (e) { console.error('Error initHistorial:', e); }
+                try { this.initModal(); } catch (e) { console.error('Error initModal:', e); }
+                try { this.initCustomSelects(); } catch (e) { console.error('Error initCustomSelects:', e); }
+
+                try { this.renderAll(); } catch (e) { console.error('Error renderAll:', e); }
+                
+                // La navegación inicial ahora es llamada por el listener de DOMContentLoaded
+                // después de que init() termine exitosamente.
+            },
+
+            // --- NAVEGACIÓN ---
+            initNavigation() {
+                const links = document.querySelectorAll('.sidebar-link[data-target]');
+                links.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const targetView = e.currentTarget.getAttribute('data-target');
+                        this.navigate(targetView);
+                        
+                        if (window.innerWidth < 768) {
+                            this.elements.sidebar.classList.add('hidden');
+                        }
+                    });
+                });
+            },
+
+            navigate(viewId, isInitialLoad = false) {
+                if (this.elements.appLoader && !isInitialLoad) {
+                    this.elements.appLoader.classList.remove('hidden');
+                }
+                
+                this.state.currentView = viewId;
+                
+                document.querySelectorAll('[data-view]').forEach(view => {
+                    view.classList.remove('active');
+                });
+                const targetView = document.getElementById(`view-${viewId}`);
+                if (targetView) {
+                    targetView.classList.add('active');
+                } else {
+                    console.error(`Vista no encontrada: ${viewId}, volviendo a CLAQUETA.`);
+                    document.getElementById('view-CLAQUETA').classList.add('active'); // Fallback
+                    this.state.currentView = 'CLAQUETA';
+                }
+
+                document.querySelectorAll('.sidebar-link[data-target]').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-target') === this.state.currentView) {
+                        link.classList.add('active');
+                    }
+                });
+                
+                // Renderizar gráficos solo cuando la vista está activa
+                if (viewId === 'METRICAS') {
+                    this.renderMetricsChart();
+                }
+                if (viewId === 'HISTORIAL') {
+                    this.renderHistorial();
+                }
+                if (viewId === 'CLIENT_ON_SET') {
+                    this.renderClientOnSet();
+                }
+
+                if (!isInitialLoad) {
+                    this.saveState();
+                }
+
+                if (this.elements.appLoader && !isInitialLoad) {
+                    setTimeout(() => {
+                        this.elements.appLoader.classList.add('hidden');
+                    }, 50); 
+                }
+            },
+
+            // --- LÓGICA DEL TOGGLE DE SIDEBAR ---
+            initSidebarToggle() {
+                this.elements.sidebarToggle = document.getElementById('sidebar-toggle');
+                this.elements.sidebar = document.getElementById('sidebar');
+                this.elements.mainContent = document.getElementById('main-content');
+                
+                this.elements.sidebarToggle.addEventListener('click', () => {
+                    this.elements.sidebar.classList.toggle('hidden');
+                });
+
+                if (window.innerWidth < 768) {
+                     this.elements.sidebar.classList.add('hidden');
+                } else {
+                     this.elements.sidebar.classList.remove('hidden');
+                }
+            },
+            
+            // --- LÓGICA DEL MODAL ---
+            initModal() {
+                this.elements.modal = {
+                    container: document.getElementById('confirmation-modal'),
+                    title: document.getElementById('modal-title'),
+                    body: document.getElementById('modal-body'),
+                    cancelBtn: document.getElementById('modal-cancel-btn'),
+                    confirmBtn: document.getElementById('modal-confirm-btn')
+                };
+                
+                this.elements.modal.cancelBtn.addEventListener('click', () => this.hideModal());
+                this.elements.modal.container.addEventListener('click', (e) => {
+                    if (e.target === this.elements.modal.container) {
+                        this.hideModal();
+                    }
+                });
+            },
+            
+            showModal({ title, body, confirmText, onConfirm }) {
+                this.elements.modal.title.textContent = title;
+                this.elements.modal.body.textContent = body;
+                this.elements.modal.confirmBtn.textContent = confirmText || 'Confirmar';
+                
+                const newConfirmBtn = this.elements.modal.confirmBtn.cloneNode(true);
+                this.elements.modal.confirmBtn.parentNode.replaceChild(newConfirmBtn, this.elements.modal.confirmBtn);
+                this.elements.modal.confirmBtn = newConfirmBtn;
+                
+                this.elements.modal.confirmBtn.addEventListener('click', () => {
+                    onConfirm();
+                    this.hideModal();
+                });
+                
+                this.elements.modal.container.style.display = 'block';
+            },
+            
+            hideModal() {
+                this.elements.modal.container.style.display = 'none';
+            },
+
+            // --- LÓGICA CUSTOM SELECT ---
+            initCustomSelects() {
+                document.querySelectorAll('.custom-select-trigger').forEach(trigger => {
+                    trigger.addEventListener('click', (e) => {
+                        e.stopPropagation(); 
+                        const options = trigger.nextElementSibling;
+                        const allOtherOptions = document.querySelectorAll('.custom-select-options');
+                        
+                        allOtherOptions.forEach(opt => {
+                            if (opt !== options) opt.classList.add('hidden');
+                        });
+                        options.classList.toggle('hidden');
+                    });
+                });
+                
+                window.addEventListener('click', () => {
+                    document.querySelectorAll('.custom-select-options').forEach(options => {
+                        options.classList.add('hidden');
+                    });
+                });
+                
+                const shotTypeContainer = document.querySelector('#view-SHOTLIST .custom-select-container');
+                if (shotTypeContainer) {
+                    const trigger = shotTypeContainer.querySelector('.custom-select-trigger');
+                    const hiddenSelect = shotTypeContainer.querySelector('select');
+                    shotTypeContainer.querySelectorAll('.custom-select-option').forEach(option => {
+                        option.addEventListener('click', () => {
+                            const value = option.dataset.value;
+                            trigger.textContent = value;
+                            hiddenSelect.value = value;
+                            trigger.dataset.value = value;
+                        });
+                    });
+                }
+            },
+
+            // --- LÓGICA DE LA CLAQUETA ---
+            initClaqueta() {
+                this.elements.claqueta = {
+                    container: document.getElementById('claqueta-container'),
+                    sceneNum: document.getElementById('scene-number'),
+                    takeNum: document.getElementById('take-number'),
+                    scenePlus: document.getElementById('scene-plus'),
+                    sceneMinus: document.getElementById('scene-minus'),
+                    takePlus: document.getElementById('take-plus'),
+                    takeMinus: document.getElementById('take-minus'),
+                    takeReset: document.getElementById('take-reset'),
+                    videoTitle: document.getElementById('claqueta-video-title'),
+                    directorSelect: document.getElementById('claqueta-director'),
+                    clientSelect: document.getElementById('claqueta-client'),
+                    videoTypeSelect: document.getElementById('claqueta-video-type'),
+                    videoTypeCustom: document.getElementById('claqueta-video-type-custom'),
+                    dateDisplay: document.getElementById('claqueta-date'),
+                    timeDisplay: document.getElementById('claqueta-time'),
+                    clapperStick: document.getElementById('clapper-stick'),
+                    clackButton: document.getElementById('clack-button'),
+                    settingCountdown: document.getElementById('setting-countdown'),
+                    settingColorBars: document.getElementById('setting-colorbars'),
+                    timerContainer: document.getElementById('recording-timer-container'),
+                    timerDisplay: document.getElementById('recording-timer'),
+                    stopRecordingBtn: document.getElementById('stop-recording-btn'),
+                };
+
+                this.elements.claqueta.scenePlus.addEventListener('click', () => this.updateClaquetaValue('scene', 1));
+                this.elements.claqueta.sceneMinus.addEventListener('click', () => this.updateClaquetaValue('scene', -1));
+                this.elements.claqueta.takePlus.addEventListener('click', () => this.updateClaquetaValue('take', 1));
+                this.elements.claqueta.takeMinus.addEventListener('click', () => this.updateClaquetaValue('take', -1));
+                this.elements.claqueta.takeReset.addEventListener('click', () => this.updateClaquetaValue('take', 'reset'));
+                
+                this.elements.claqueta.videoTitle.addEventListener('input', (e) => { this.state.claqueta.title = e.target.value; this.saveState(); });
+                
+                this.elements.claqueta.directorSelect.addEventListener('change', (e) => { this.state.claqueta.directorId = e.target.value; this.saveState(); });
+                this.elements.claqueta.clientSelect.addEventListener('change', (e) => { this.state.claqueta.clientId = e.target.value; this.saveState(); });
+                this.elements.claqueta.videoTypeSelect.addEventListener('change', (e) => this.handleVideoTypeChange(e.target.value));
+                this.elements.claqueta.videoTypeCustom.addEventListener('input', (e) => { this.state.claqueta.videoType = e.target.value; this.saveState(); });
+
+                document.querySelectorAll('.btn-fps').forEach(btn => btn.addEventListener('click', () => this.updateClaquetaSetting('fps', btn.dataset.value)));
+                document.querySelectorAll('.btn-quality').forEach(btn => btn.addEventListener('click', () => this.updateClaquetaSetting('quality', btn.dataset.value)));
+
+                this.elements.claqueta.settingCountdown.addEventListener('change', (e) => { this.state.config.countdown = e.target.checked; this.saveState(); });
+                this.elements.claqueta.settingColorBars.addEventListener('change', (e) => { this.state.config.colorBars = e.target.checked; this.saveState(); });
+                
+                this.elements.claqueta.clapperStick.addEventListener('click', () => this.startClackSequence());
+                this.elements.claqueta.clackButton.addEventListener('click', () => this.startClackSequence());
+
+                this.elements.claqueta.stopRecordingBtn.addEventListener('click', () => this.stopRecordingTimer());
+
+                this.updateClaquetaTime();
+                setInterval(() => this.updateClaquetaTime(), 1000);
+            },
+            renderClaqueta() {
+                const { claqueta, config } = this.state;
+                this.elements.claqueta.sceneNum.textContent = String(claqueta.scene).padStart(3, '0');
+                this.elements.claqueta.takeNum.textContent = String(claqueta.take).padStart(2, '0');
+                this.elements.claqueta.videoTitle.value = claqueta.title;
+                
+                this.renderSettingDropdown('clients', this.elements.claqueta.clientSelect, claqueta.clientId, 'Seleccionar Cliente...');
+                this.renderSettingDropdown('directors', this.elements.claqueta.directorSelect, claqueta.directorId, 'Seleccionar Director...');
+                this.renderSettingDropdown('videoTypes', this.elements.claqueta.videoTypeSelect, claqueta.videoType, 'Seleccionar Tipo...');
+                this.handleVideoTypeChange(claqueta.videoType);
+                
+                this.elements.claqueta.settingCountdown.checked = config.countdown;
+                this.elements.claqueta.settingColorBars.checked = config.colorBars;
+                
+                this.updateClaquetaSetting('fps', claqueta.fps, true);
+                this.updateClaquetaSetting('quality', claqueta.quality, true);
+            },
+            updateClaquetaValue(field, change) {
+                if (field === 'scene') {
+                    this.state.claqueta.scene = Math.max(1, this.state.claqueta.scene + change);
+                } else if (field === 'take') {
+                    if (change === 'reset') {
+                        this.state.claqueta.take = 1;
+                    } else {
+                        this.state.claqueta.take = Math.max(1, this.state.claqueta.take + change);
+                    }
+                }
+                this.renderClaqueta();
+                this.saveState();
+            },
+            updateClaquetaSetting(type, value, isRenderOnly = false) {
+                if (!isRenderOnly) {
+                    this.state.claqueta[type] = value;
+                }
+                document.querySelectorAll(`.btn-${type}`).forEach(btn => {
+                    const isActive = btn.dataset.value === this.state.claqueta[type];
+                    btn.classList.toggle('active', isActive);
+                    btn.classList.toggle('bg-purple-700', isActive);
+                    btn.classList.toggle('text-white', isActive);
+                    btn.classList.toggle('bg-gray-200', !isActive);
+                    btn.classList.toggle('text-gray-700', !isActive);
+                });
+                if (!isRenderOnly) {
+                    this.saveState();
+                }
+            },
+            handleVideoTypeChange(value) {
+                const customInput = this.elements.claqueta.videoTypeCustom;
+                if (value === 'OTRO...') {
+                    customInput.classList.remove('hidden');
+                    customInput.focus();
+                    if(this.state.claqueta.videoType === 'OTRO...') {
+                        this.state.claqueta.videoType = '';
+                    }
+                } else {
+                    customInput.classList.add('hidden');
+                    this.state.claqueta.videoType = value;
+                }
+                if(value !== 'OTRO...') {
+                   this.saveState();
+                }
+            },
+            updateClaquetaTime() {
+                const now = new Date();
+                this.elements.claqueta.dateDisplay.textContent = now.toLocaleDateString('es-ES', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+                this.elements.claqueta.timeDisplay.textContent = now.toLocaleTimeString('es-ES', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            },
+
+            // --- LÓGICA DE SECUENCIA DE CLAQUETA (SONIDO, FX) ---
+            sounds: { /* ... */ },
+            initSound() {
+                // Comprobar si Tone existe
+                if (typeof Tone === 'undefined') {
+                    console.warn("Tone.js no se ha cargado (posiblemente offline). Se desactivará el sonido.");
+                    return; // Salir de la función si Tone no existe
+                }
+                try {
+                    // Sonidos más fuertes y serios
+                    this.sounds.clack = new Tone.MembraneSynth({
+                        pitchDecay: 0.01,
+                        octaves: 2,
+                        envelope: { attack: 0.001, decay: 0.15, sustain: 0 }
+                    }).toDestination();
+                    
+                    this.sounds.tic = new Tone.FMSynth({
+                        harmonicity: 3,
+                        modulationIndex: 10,
+                        envelope: { attack: 0.001, decay: 0.05 }
+                    }).toDestination();
+                    
+                    this.sounds.beep = new Tone.Synth({
+                        oscillator: { type: 'square' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0 }
+                    }).toDestination();
+                } catch (e) {
+                    console.error("Error inicializando Tone.js:", e.message);
+                }
+            },
+            async startClackSequence() {
+                if (this.elements.claqueta.clapperStick.disabled) return;
+                this.elements.claqueta.clapperStick.disabled = true;
+
+                // Comprobar si Tone existe
+                if (typeof Tone !== 'undefined') {
+                    try {
+                        if (Tone.context.state !== 'running') {
+                            await Tone.start();
+                        }
+                    } catch (e) {
+                        console.error("Error iniciando Tone.js context:", e.message);
+                    }
+                }
+
+                if (this.state.config.colorBars) {
+                    this.showColorBars();
+                    await this.wait(3000);
+                    this.hideOverlays();
+                }
+
+                if (this.state.config.countdown) {
+                    await this.startCountdown();
+                }
+                
+                // Comprobar si Tone existe
+                if (typeof Tone !== 'undefined') {
+                    try {
+                        this.sounds.beep?.triggerAttackRelease("C5", "0.2"); 
+                        await this.wait(50);
+                        this.sounds.clack?.triggerAttackRelease("C2", "0.15"); 
+                    } catch (e) {
+                        console.error("Error reproduciendo sonido:", e.message);
+                    }
+                }
+
+                this.logRecording(); 
+                this.updateClaquetaValue('take', 1);
+                this.startRecordingTimer();
+                
+                setTimeout(() => {
+                    this.elements.claqueta.clapperStick.disabled = false;
+                }, 500);
+            },
+            wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            },
+            showColorBars() {
+                document.getElementById('color-bars-overlay').style.display = 'flex';
+            },
+            hideOverlays() {
+                document.getElementById('color-bars-overlay').style.display = 'none';
+                document.getElementById('countdown-overlay').style.display = 'none';
+            },
+            async startCountdown() {
+                const overlay = document.getElementById('countdown-overlay');
+                const numberEl = document.getElementById('countdown-number');
+                overlay.style.display = 'flex';
+                
+                for (let i = 3; i > 0; i--) {
+                    numberEl.textContent = i;
+                    if (typeof Tone !== 'undefined') {
+                        try {
+                            this.sounds.tic?.triggerAttackRelease("C5", "0.05"); 
+                        } catch (e) { console.error("Error sonido tic:", e.message); }
+                    }
+                    await this.wait(1000);
+                }
+                
+                numberEl.textContent = '';
+                overlay.style.display = 'none';
+            },
+            recordingTimerInterval: null,
+            startRecordingTimer() {
+                if (this.recordingTimerInterval) {
+                    clearInterval(this.recordingTimerInterval);
+                }
+                this.elements.claqueta.timerContainer.classList.remove('invisible');
+                let startTime = Date.now();
+                this.recordingTimerInterval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+                    const totalSeconds = Math.floor(elapsed / 1000);
+                    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                    const seconds = String(totalSeconds % 60).padStart(2, '0');
+                    this.elements.claqueta.timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+                }, 1000);
+            },
+            stopRecordingTimer() {
+                if (this.recordingTimerInterval) {
+                    clearInterval(this.recordingTimerInterval);
+                    this.recordingTimerInterval = null;
+                }
+                this.elements.claqueta.timerContainer.classList.add('invisible');
+                this.elements.claqueta.timerDisplay.textContent = '00:00:00';
+            },
+            logRecording() {
+                const { scene, take, title, clientId, directorId, videoType, fps, quality } = this.state.claqueta; 
+                const clientName = (clientId !== '' && this.state.settings.clients[clientId]) ? this.state.settings.clients[clientId] : 'N/A';
+                const directorName = (directorId !== '' && this.state.settings.directors[directorId]) ? this.state.settings.directors[directorId] : 'N/A';
+                
+                const newLog = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    scene: scene,
+                    take: take,
+                    title: title,
+                    clientName: clientName,
+                    directorName: directorName,
+                    videoType: videoType,
+                    fps: fps,
+                    quality: quality
+                };
+                this.state.recordingHistory.push(newLog);
+                this.saveState();
+                if (this.state.currentView === 'HISTORIAL') {
+                    this.renderHistorial();
+                }
+            },
+
+            // --- LÓGICA DE CONFIGURACIONES ---
+            initSettings() {
+                this.elements.settings = {
+                    newClientName: document.getElementById('new-client-name'),
+                    addClientBtn: document.getElementById('add-client-btn'),
+                    clientList: document.getElementById('client-list'),
+                    newDirectorName: document.getElementById('new-director-name'),
+                    addDirectorBtn: document.getElementById('add-director-btn'),
+                    directorList: document.getElementById('director-list'),
+                    newEquipmentName: document.getElementById('new-equipment-name'),
+                    addEquipmentBtn: document.getElementById('add-equipment-btn'),
+                    equipmentList: document.getElementById('equipment-list'),
+                    newVideoType: document.getElementById('new-video-type'),
+                    addVideoTypeBtn: document.getElementById('add-video-type-btn'),
+                    videoTypeList: document.getElementById('video-type-list'),
+                    exportDbBtn: document.getElementById('export-db-btn'),
+                    importDbBtn: document.getElementById('import-db-btn'),
+                    importDbFile: document.getElementById('import-db-file'),
+                };
+                
+                this.elements.settings.addClientBtn.addEventListener('click', () => this.addSettingItem('clients', this.elements.settings.newClientName));
+                this.elements.settings.addDirectorBtn.addEventListener('click', () => this.addSettingItem('directors', this.elements.settings.newDirectorName));
+                this.elements.settings.addEquipmentBtn.addEventListener('click', () => this.addSettingItem('equipment', this.elements.settings.newEquipmentName));
+                this.elements.settings.addVideoTypeBtn.addEventListener('click', () => this.addSettingItem('videoTypes', this.elements.settings.newVideoType));
+                
+                this.elements.settings.exportDbBtn.addEventListener('click', () => this.exportDatabase());
+                this.elements.settings.importDbBtn.addEventListener('click', () => this.elements.settings.importDbFile.click());
+                this.elements.settings.importDbFile.addEventListener('change', (e) => this.importDatabase(e));
+            },
+            addSettingItem(type, inputElement) {
+                const value = inputElement.value.trim().toUpperCase();
+                if (value) {
+                    if (!this.state.settings[type].includes(value)) {
+                        if(type === 'videoTypes' && this.state.settings[type].includes('OTRO...')) {
+                            const index = this.state.settings[type].indexOf('OTRO...');
+                            this.state.settings[type].splice(index, 0, value);
+                        } else {
+                            this.state.settings[type].push(value);
+                        }
+                        inputElement.value = '';
+                        this.renderSettings();
+                        this.renderAllDropdowns();
+                        this.saveState();
+                    }
+                }
+            },
+            removeSettingItem(type, index) {
+                if(this.state.settings[type][index] === 'OTRO...') return;
+                this.state.settings[type].splice(index, 1);
+                this.renderSettings();
+                this.renderAllDropdowns();
+                this.saveState();
+            },
+            renderSettings() {
+                this.renderSettingList(this.elements.settings.clientList, this.state.settings.clients, 'clients');
+                this.renderSettingList(this.elements.settings.directorList, this.state.settings.directors, 'directors');
+                this.renderSettingList(this.elements.settings.equipmentList, this.state.settings.equipment, 'equipment');
+                this.renderSettingList(this.elements.settings.videoTypeList, this.state.settings.videoTypes, 'videoTypes');
+            },
+            renderSettingList(ulElement, items, type) {
+                ulElement.innerHTML = '';
+                if (items.length === 0) {
+                    ulElement.innerHTML = `<li class="text-gray-500 italic">No hay elementos.</li>`;
+                    return;
+                }
+                items.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center bg-gray-700 p-2 rounded-lg';
+                    li.innerHTML = `
+                        <span>${item}</span>
+                        <button class="btn-danger p-1 rounded-full w-6 h-6 flex items-center justify-center ${item === 'OTRO...' ? 'hidden' : ''}">
+                            <ion-icon name="close-outline"></ion-icon>
+                        </button>
+                    `;
+                    li.querySelector('button').addEventListener('click', () => this.removeSettingItem(type, index));
+                    ulElement.appendChild(li);
+                });
+            },
+            renderAllDropdowns() {
+                this.renderSettingDropdown('clients', this.elements.claqueta.clientSelect, this.state.claqueta.clientId, 'Seleccionar Cliente...');
+                this.renderSettingDropdown('directors', this.elements.claqueta.directorSelect, this.state.claqueta.directorId, 'Seleccionar Director...');
+                this.renderSettingDropdown('clients', document.getElementById('shoot-client'), null, 'Seleccionar Cliente...');
+                this.renderSettingDropdown('videoTypes', this.elements.claqueta.videoTypeSelect, this.state.claqueta.videoType, 'Seleccionar Tipo...');
+            },
+            renderSettingDropdown(listName, selectElement, selectedValue, placeholder) {
+                if (!selectElement) return;
+                const items = this.state.settings[listName];
+                
+                selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+                let selectedText = placeholder;
+                
+                const useValue = (listName === 'videoTypes');
+                
+                items.forEach((item, index) => {
+                    const value = useValue ? item : index;
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = item;
+                    if (selectedValue !== null && selectedValue !== '' && String(value) === String(selectedValue)) {
+                        option.selected = true;
+                        selectedText = item;
+                    }
+                    selectElement.appendChild(option);
+                });
+                
+                if (useValue && !items.includes(selectedValue) && selectedValue) {
+                    const option = document.createElement('option');
+                    option.value = selectedValue;
+                    option.textContent = selectedValue;
+                    option.selected = true;
+                    selectElement.appendChild(option);
+                    selectedText = selectedValue;
+                }
+
+                const container = selectElement.closest('.custom-select-container');
+                if (!container) return; 
+                
+                const trigger = container.querySelector('.custom-select-trigger');
+                const optionsList = container.querySelector('.custom-select-options');
+                optionsList.innerHTML = ''; 
+                
+                const phOption = document.createElement('div');
+                phOption.className = 'custom-select-option placeholder';
+                phOption.textContent = placeholder;
+                phOption.dataset.value = '';
+                phOption.addEventListener('click', (e) => {
+                    selectElement.value = '';
+                    selectElement.dispatchEvent(new Event('change'));
+                    trigger.textContent = placeholder;
+                    optionsList.classList.add('hidden');
+                    e.stopPropagation(); 
+                });
+                optionsList.appendChild(phOption);
+
+                items.forEach((item, index) => {
+                    const value = useValue ? item : index;
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'custom-select-option';
+                    optDiv.textContent = item;
+                    optDiv.dataset.value = value;
+                    
+                    if (selectedValue !== null && selectedValue !== '' && String(value) === String(selectedValue)) {
+                        selectedText = item;
+                    }
+                    
+                    optDiv.addEventListener('click', (e) => {
+                        selectElement.value = value;
+                        selectElement.dispatchEvent(new Event('change')); 
+                        trigger.textContent = item;
+                        optionsList.classList.add('hidden');
+                        e.stopPropagation(); 
+                    });
+                    optionsList.appendChild(optDiv);
+                });
+                
+                trigger.textContent = selectedText;
+            },
+            
+            // --- LÓGICA DE RODAJE ---
+            initRodajes() {
+                this.elements.rodajes = {
+                    newShootBtn: document.getElementById('new-shoot-btn'),
+                    newShootForm: document.getElementById('new-shoot-form'),
+                    cancelShootBtn: document.getElementById('cancel-shoot-btn'),
+                    saveShootBtn: document.getElementById('save-shoot-btn'),
+                    shootsList: document.getElementById('shoots-list'),
+                    shootClient: document.getElementById('shoot-client'), 
+                    shootDate: document.getElementById('shoot-date'),
+                    shootNotes: document.getElementById('shoot-notes'),
+                }
+                
+                this.elements.rodajes.newShootBtn.addEventListener('click', () => {
+                    this.elements.rodajes.newShootForm.classList.remove('hidden');
+                });
+                this.elements.rodajes.cancelShootBtn.addEventListener('click', () => {
+                    this.elements.rodajes.newShootForm.classList.add('hidden');
+                    this.clearRodajeForm();
+                });
+                this.elements.rodajes.saveShootBtn.addEventListener('click', () => this.saveShoot());
+            },
+            clearRodajeForm() {
+                this.elements.rodajes.shootClient.value = '';
+                const trigger = this.elements.rodajes.shootClient.closest('.custom-select-container').querySelector('.custom-select-trigger');
+                if (trigger) trigger.textContent = 'Seleccionar Cliente...';
+                
+                this.elements.rodajes.shootDate.value = '';
+                this.elements.rodajes.shootNotes.value = '';
+                document.querySelectorAll('#new-shoot-form input[type="checkbox"]').forEach(cb => cb.checked = false);
+            },
+            saveShoot() {
+                const clientIndex = this.elements.rodajes.shootClient.value;
+                const clientName = (clientIndex !== '') ? this.state.settings.clients[clientIndex] : 'N/A';
+                const date = this.elements.rodajes.shootDate.value;
+                const notes = this.elements.rodajes.shootNotes.value;
+                const contentTypes = Array.from(document.querySelectorAll('#new-shoot-form input[type="checkbox"]:checked')).map(cb => cb.value);
+                
+                if (clientIndex === '' || !date) {
+                    alert('Por favor, selecciona un cliente y una fecha.');
+                    return;
+                }
+                
+                const equipmentChecklist = this.state.settings.equipment.map(item => ({
+                    name: item,
+                    packed: false,
+                    returned: false
+                }));
+                
+                const newShoot = {
+                    id: Date.now(),
+                    clientId: clientIndex,
+                    clientName: clientName,
+                    date: date,
+                    notes: notes,
+                    contentTypes: contentTypes,
+                    equipmentChecklist: equipmentChecklist
+                };
+                
+                this.state.shoots.push(newShoot);
+                this.renderRodajes();
+                this.clearRodajeForm();
+                this.elements.rodajes.newShootForm.classList.add('hidden');
+                this.saveState();
+            },
+            renderRodajes() {
+                const list = this.elements.rodajes.shootsList;
+                list.innerHTML = '';
+                
+                if (this.state.shoots.length === 0) {
+                    list.innerHTML = `<div class="bg-gray-800 p-6 rounded-lg text-center text-gray-500">No hay rodajes programados.</div>`;
+                    return;
+                }
+                
+                this.state.shoots.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                this.state.shoots.forEach(shoot => {
+                    const shootCard = document.createElement('div');
+                    shootCard.className = 'bg-gray-800 p-6 rounded-lg shadow-lg';
+                    shootCard.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-title text-2xl text-white">${shoot.clientName}</h3>
+                                <p class="text-purple-400 font-bold">${new Date(shoot.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            <button class="btn btn-danger" data-shoot-id="${shoot.id}">Eliminar</button>
+                        </div>
+                        <p class="text-gray-300 mb-4">${shoot.notes || 'Sin notas.'}</p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${shoot.contentTypes.map(type => `<span class="bg-gray-700 text-purple-300 text-xs font-bold px-3 py-1 rounded-full">${type}</span>`).join('')}
+                        </div>
+                        
+                        <h4 class="font-title text-lg text-white mb-2">Checklist de Equipo</h4>
+                        <div class="grid grid-cols-3 gap-x-4 gap-y-2 bg-gray-700 p-4 rounded-lg">
+                            <span class="font-bold text-gray-400">Equipo</span>
+                            <span class="font-bold text-gray-400 text-center">Empacado</span>
+                            <span class="font-bold text-gray-400 text-center">Devuelto</span>
+                            ${this.renderEquipmentChecklist(shoot.id)}
+                        </div>
+                        <div class="text-right mt-2">
+                            ${this.getChecklistSummary(shoot.id)}
+                        </div>
+                    `;
+                    
+                    shootCard.querySelector('button[data-shoot-id]').addEventListener('click', (e) => {
+                        this.deleteShoot(e.currentTarget.dataset.shootId);
+                    });
+                    
+                    shootCard.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.addEventListener('change', (e) => {
+                            this.updateChecklistItem(shoot.id, e.target.dataset.item, e.target.dataset.status, e.target.checked);
+                        });
+                    });
+                    
+                    list.appendChild(shootCard);
+                });
+            },
+            getChecklistSummary(shootId) {
+                const shoot = this.state.shoots.find(s => s.id == shootId);
+                if (!shoot) return '';
+                const total = shoot.equipmentChecklist.length;
+                if (total === 0) return '<p class="text-sm text-gray-500">Añade equipo en Config.</p>';
+                
+                const packed = shoot.equipmentChecklist.filter(item => item.packed).length;
+                const returned = shoot.equipmentChecklist.filter(item => item.returned).length;
+                
+                let packedSummary = '';
+                if (packed < total && packed > 0) {
+                    packedSummary = `<span class="text-yellow-400">${packed}/${total} Empacados</span>`;
+                } else if (packed === total && total > 0) {
+                    packedSummary = `<span class="text-green-400">Todo Empacado</span>`;
+                } else {
+                    packedSummary = `<span class="text-red-400">Nada Empacado</span>`;
+                }
+
+                let returnedSummary = '';
+                if (packed === total && returned < total && returned > 0) {
+                    returnedSummary = `<span class="text-yellow-400">${returned}/${total} Devueltos</span>`;
+                } else if (packed === total && returned === total && total > 0) {
+                    returnedSummary = `<span class="text-green-400">Todo Devuelto</span>`;
+                }
+                
+                return `<p class="text-sm text-gray-400">${packedSummary} ${returnedSummary}</p>`;
+            },
+            renderEquipmentChecklist(shootId) {
+                const shoot = this.state.shoots.find(s => s.id == shootId);
+                if (!shoot) return '';
+                
+                return shoot.equipmentChecklist.map(item => `
+                    <span class="text-gray-200">${item.name}</span>
+                    <label class="flex justify-center"><input type="checkbox" class="form-checkbox rounded text-purple-600" data-item="${item.name}" data-status="packed" ${item.packed ? 'checked' : ''}></label>
+                    <label class="flex justify-center"><input type="checkbox" class="form-checkbox rounded text-purple-600" data-item="${item.name}" data-status="returned" ${item.returned ? 'checked' : ''}></label>
+                `).join('');
+            },
+            updateChecklistItem(shootId, itemName, status, isChecked) {
+                const shoot = this.state.shoots.find(s => s.id == shootId);
+                if (!shoot) return;
+                const item = shoot.equipmentChecklist.find(i => i.name === itemName);
+                if (item) {
+                    item[status] = isChecked;
+                    this.saveState();
+                    this.renderRodajes();
+                }
+            },
+            deleteShoot(shootId) {
+                this.showModal({
+                    title: 'Eliminar Rodaje',
+                    body: '¿Estás seguro de que quieres eliminar este rodaje? Esta acción no se puede deshacer.',
+                    confirmText: 'Sí, Eliminar',
+                    onConfirm: () => {
+                        this.state.shoots = this.state.shoots.filter(s => s.id != shootId);
+                        this.renderRodajes();
+                        this.saveState();
+                    }
+                });
+            },
+            
+            // --- LÓGICA DE SHOTLIST ---
+            initShotlist() {
+                this.elements.shotlist = {
+                    addShotBtn: document.getElementById('add-shot-btn'),
+                    newShotForm: document.getElementById('new-shot-form'),
+                    cancelShotBtn: document.getElementById('cancel-shot-btn'),
+                    saveShotBtn: document.getElementById('save-shot-btn'),
+                    shotlistBody: document.getElementById('shotlist-body'),
+                    shotlistEmpty: document.getElementById('shotlist-empty'),
+                    shotType: document.getElementById('shot-type'), 
+                    shotDuration: document.getElementById('shot-duration'),
+                    shotDescription: document.getElementById('shot-description'),
+                    shotNotes: document.getElementById('shot-notes'),
+                };
+                
+                this.elements.shotlist.addShotBtn.addEventListener('click', () => {
+                    this.elements.shotlist.newShotForm.classList.remove('hidden');
+                });
+                this.elements.shotlist.cancelShotBtn.addEventListener('click', () => {
+                    this.elements.shotlist.newShotForm.classList.add('hidden');
+                    this.clearShotlistForm();
+                });
+                this.elements.shotlist.saveShotBtn.addEventListener('click', () => this.saveShot());
+            },
+            clearShotlistForm() {
+                this.elements.shotlist.shotType.value = 'Plano General';
+                const trigger = this.elements.shotlist.shotType.closest('.custom-select-container').querySelector('.custom-select-trigger');
+                if (trigger) trigger.textContent = 'Plano General';
+                
+                this.elements.shotlist.shotDuration.value = '';
+                this.elements.shotlist.shotDescription.value = '';
+                this.elements.shotlist.shotNotes.value = '';
+            },
+            saveShot() {
+                const newShot = {
+                    id: Date.now(),
+                    type: this.elements.shotlist.shotType.value,
+                    duration: this.elements.shotlist.shotDuration.value,
+                    description: this.elements.shotlist.shotDescription.value,
+                    notes: this.elements.shotlist.shotNotes.value,
+                    completed: false
+                };
+                
+                this.state.shotlist.push(newShot);
+                this.renderShotlist();
+                this.clearShotlistForm();
+                this.elements.shotlist.newShotForm.classList.add('hidden');
+                this.saveState();
+            },
+            renderShotlist() {
+                const body = this.elements.shotlist.shotlistBody;
+                const emptyMsg = this.elements.shotlist.shotlistEmpty;
+                body.innerHTML = '';
+                
+                if (this.state.shotlist.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    body.style.display = 'none';
+                    return;
+                }
+                
+                emptyMsg.style.display = 'none';
+                body.style.display = 'table-row-group';
+                
+                this.state.shotlist.forEach((shot, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = `border-gray-700 ${shot.completed ? 'bg-green-900 bg-opacity-30' : ''}`;
+                    tr.innerHTML = `
+                        <td class="p-4">${String(index + 1).padStart(2, '0')}</td>
+                        <td class="p-4 font-bold">${shot.type}</td>
+                        <td class="p-4 text-gray-300">${shot.description}</td>
+                        <td class="p-4 text-center">${shot.duration}s</td>
+                        <td class="p-4 text-gray-400">${shot.notes}</td>
+                        <td class="p-4">
+                            <label class="flex justify-center"><input type="checkbox" class="form-checkbox rounded text-purple-600" data-shot-id="${shot.id}" ${shot.completed ? 'checked' : ''}></label>
+                        </td>
+                        <td class="p-4 space-x-2">
+                            <button class="btn-secondary p-1 rounded" data-move-up="${index}" ${index === 0 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''}>▲</button>
+                            <button class="btn-secondary p-1 rounded" data-move-down="${index}" ${index === this.state.shotlist.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''}>▼</button>
+                            <button class="btn-danger p-1 rounded" data-delete-id="${shot.id}">X</button>
+                        </td>
+                    `;
+                    
+                    tr.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                        this.toggleShotStatus(e.target.dataset.shotId, e.target.checked);
+                    });
+                    tr.querySelector(`button[data-delete-id]`).addEventListener('click', (e) => {
+                        this.deleteShot(e.currentTarget.dataset.deleteId);
+                    });
+                    tr.querySelector(`button[data-move-up]`).addEventListener('click', (e) => {
+                        this.moveShot(e.currentTarget.dataset.moveUp, -1);
+                    });
+                    tr.querySelector(`button[data-move-down]`).addEventListener('click', (e) => {
+                        this.moveShot(e.currentTarget.dataset.moveDown, 1);
+                    });
+                    
+                    body.appendChild(tr);
+                });
+            },
+            toggleShotStatus(shotId, isCompleted) {
+                const shot = this.state.shotlist.find(s => s.id == shotId);
+                if (shot) {
+                    shot.completed = isCompleted;
+                    this.renderShotlist();
+                    this.saveState();
+                }
+            },
+            deleteShot(shotId) {
+                this.showModal({
+                    title: 'Eliminar Plano',
+                    body: '¿Estás seguro de que quieres eliminar este plano?',
+                    confirmText: 'Sí, Eliminar',
+                    onConfirm: () => {
+                        this.state.shotlist = this.state.shotlist.filter(s => s.id != shotId);
+                        this.renderShotlist();
+                        this.saveState();
+                    }
+                });
+            },
+            moveShot(index, direction) {
+                const i = parseInt(index);
+                const newIndex = i + direction;
+                if (newIndex < 0 || newIndex >= this.state.shotlist.length) return;
+                
+                const [item] = this.state.shotlist.splice(i, 1);
+                this.state.shotlist.splice(newIndex, 0, item);
+                
+                this.renderShotlist();
+                this.saveState();
+            },
+
+            // --- LÓGICA DE GUIONES ---
+            initGuiones() {
+                this.elements.guiones = {
+                   title: document.getElementById('script-title'),
+                   hook: document.getElementById('script-hook'),
+                   body: document.getElementById('script-body'),
+                   cta: document.getElementById('script-cta'),
+                   saveBtn: document.getElementById('save-script-btn'),
+                   deleteBtn: document.getElementById('delete-script-btn'),
+                   feedback: document.getElementById('save-script-feedback'),
+                   list: document.getElementById('script-list'),
+                   newBtn: document.getElementById('new-script-btn'),
+                   importBtn: document.getElementById('import-script-btn'),
+                   importFile: document.getElementById('import-script-file'),
+                   editorContainer: document.getElementById('script-editor-container'),
+                   emptyState: document.getElementById('script-empty-state'),
+                };
+                
+                this.elements.guiones.saveBtn.addEventListener('click', () => this.saveCurrentScript());
+                this.elements.guiones.newBtn.addEventListener('click', () => this.createNewScript());
+                this.elements.guiones.deleteBtn.addEventListener('click', () => this.deleteCurrentScript());
+                
+                this.elements.guiones.importBtn.addEventListener('click', () => this.elements.guiones.importFile.click());
+                this.elements.guiones.importFile.addEventListener('change', (e) => this.importScript(e));
+            },
+            createNewScript() {
+                const newId = Date.now();
+                const newScript = {
+                    id: newId,
+                    title: 'Nuevo Guion',
+                    hook: '',
+                    body: '',
+                    cta: '',
+                    dateModified: new Date().toISOString()
+                };
+                this.state.scripts.push(newScript);
+                this.state.currentScriptId = newId;
+                this.renderGuiones();
+                this.saveState();
+                this.elements.guiones.title.focus();
+            },
+            saveCurrentScript() {
+                if (!this.state.currentScriptId) {
+                    return;
+                }
+                const script = this.state.scripts.find(s => s.id == this.state.currentScriptId);
+                if (script) {
+                   script.title = this.elements.guiones.title.value;
+                   script.hook = this.elements.guiones.hook.value;
+                   script.body = this.elements.guiones.body.value;
+                   script.cta = this.elements.guiones.cta.value;
+                   script.dateModified = new Date().toISOString();
+                   this.saveState();
+                   this.renderGuionesList();
+                   this.elements.guiones.feedback.classList.remove('hidden');
+                   setTimeout(() => {
+                       this.elements.guiones.feedback.classList.add('hidden');
+                   }, 2000);
+                }
+            },
+            deleteCurrentScript() {
+                if (!this.state.currentScriptId) return;
+                const scriptTitle = this.state.scripts.find(s => s.id == this.state.currentScriptId)?.title || 'este guion';
+                this.showModal({
+                    title: 'Eliminar Guion',
+                    body: `¿Estás seguro de que quieres eliminar "${scriptTitle}"? Esta acción no se puede deshacer.`,
+                    confirmText: 'Sí, Eliminar',
+                    onConfirm: () => {
+                        this.state.scripts = this.state.scripts.filter(s => s.id != this.state.currentScriptId);
+                        this.state.currentScriptId = null;
+                        this.renderGuiones();
+                        this.saveState();
+                    }
+                });
+            },
+            selectScript(id) {
+                this.state.currentScriptId = id;
+                this.renderGuiones();
+            },
+            importScript(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    let newScriptData = {
+                        title: file.name.replace(/\.[^/.]+$/, ""), 
+                        hook: '', body: '', cta: ''
+                    };
+                    if (file.type === 'application/json') {
+                        try {
+                            const jsonData = JSON.parse(content);
+                            newScriptData.title = jsonData.title || newScriptData.title;
+                            newScriptData.hook = jsonData.hook || '';
+                            newScriptData.body = jsonData.body || '';
+                            newScriptData.cta = jsonData.cta || '';
+                        } catch (err) {
+                            console.error('Error al parsear JSON, importando como texto.', err);
+                            newScriptData.body = content; // Fallback
+                        }
+                    } else {
+                        newScriptData.body = content;
+                    }
+                    const newId = Date.now();
+                    const newScript = {
+                        id: newId, ...newScriptData, dateModified: new Date().toISOString()
+                    };
+                    this.state.scripts.push(newScript);
+                    this.state.currentScriptId = newId; 
+                    this.renderGuiones();
+                    this.saveState();
+                };
+                reader.readAsText(file);
+                event.target.value = null;
+            },
+            renderGuiones() {
+               this.state.scripts.sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified));
+               if (!this.state.currentScriptId && this.state.scripts.length > 0) {
+                   this.state.currentScriptId = this.state.scripts[0].id;
+               }
+               this.renderGuionesList();
+               this.renderGuionesEditor();
+            },
+            renderGuionesList() {
+                const listEl = this.elements.guiones.list;
+                listEl.innerHTML = '';
+                if (this.state.scripts.length === 0) {
+                    listEl.innerHTML = `<li class="text-gray-500 text-center italic p-4">Crea tu primer guion.</li>`;
+                    return;
+                }
+                this.state.scripts.forEach(script => {
+                    const li = document.createElement('li');
+                    const isActive = script.id == this.state.currentScriptId;
+                    li.className = `p-4 rounded-lg cursor-pointer ${isActive ? 'bg-purple-700 text-white' : 'bg-gray-600 hover:bg-gray-500'}`;
+                    li.dataset.scriptId = script.id;
+                    li.innerHTML = `
+                        <h4 class="font-bold truncate">${script.title}</h4>
+                        <p class="text-sm ${isActive ? 'text-purple-200' : 'text-gray-400'}">Mod: ${new Date(script.dateModified).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                    `;
+                    li.addEventListener('click', () => this.selectScript(script.id));
+                    listEl.appendChild(li);
+                });
+            },
+            renderGuionesEditor() {
+                const script = this.state.scripts.find(s => s.id == this.state.currentScriptId);
+                if (script) {
+                    this.elements.guiones.editorContainer.classList.remove('hidden');
+                    this.elements.guiones.emptyState.classList.add('hidden');
+                    this.elements.guiones.title.value = script.title || '';
+                    this.elements.guiones.hook.value = script.hook || '';
+                    this.elements.guiones.body.value = script.body || '';
+                    this.elements.guiones.cta.value = script.cta || '';
+                } else {
+                    this.elements.guiones.editorContainer.classList.add('hidden');
+                    this.elements.guiones.emptyState.classList.remove('hidden');
+                }
+            },
+
+            // --- LÓGICA DE MÉTRICAS ---
+            metricsChart: null,
+            initMetrics() {
+                this.elements.metrics = {
+                    ctr: document.getElementById('metric-ctr'),
+                    cpm: document.getElementById('metric-cpm'),
+                    retention3s: document.getElementById('metric-retention-3s'),
+                    retention10s: document.getElementById('metric-retention-10s'),
+                    hookRate: document.getElementById('metric-hook-rate'),
+                    cpr: document.getElementById('metric-cpr'),
+                    updateBtn: document.getElementById('update-chart-btn'),
+                    chartCanvas: document.getElementById('metrics-chart'),
+                };
+                
+                this.elements.metrics.updateBtn.addEventListener('click', () => this.updateMetrics());
+                
+                // Comprobar si Chart existe
+                if (typeof Chart !== 'undefined') {
+                    this.initMetricsChart();
+                } else {
+                    console.warn("Chart.js no cargado. Gráfico de Métricas desactivado.");
+                    this.elements.metrics.chartCanvas.parentElement.innerHTML = '<p class="text-gray-500 text-center">Gráficos desactivados. Se requiere conexión a internet para cargar Chart.js</p>';
+                }
+            },
+            initMetricsChart() {
+                if (typeof Chart === 'undefined') return;
+                if (this.metricsChart) this.metricsChart.destroy();
+                const ctx = this.elements.metrics.chartCanvas.getContext('2d');
+                this.metricsChart = new Chart(ctx, { /* ... (definición del gráfico) ... */ });
+            },
+            renderMetrics() {
+                const { metrics } = this.state;
+                this.elements.metrics.ctr.value = metrics.ctr;
+                this.elements.metrics.cpm.value = metrics.cpm;
+                this.elements.metrics.retention3s.value = metrics.retention3s;
+                this.elements.metrics.retention10s.value = metrics.retention10s;
+                this.elements.metrics.hookRate.value = metrics.hookRate;
+                this.elements.metrics.cpr.value = metrics.cpr;
+                this.renderMetricsChart();
+            },
+            updateMetrics() {
+                this.state.metrics = {
+                    ctr: parseFloat(this.elements.metrics.ctr.value) || 0,
+                    cpm: parseFloat(this.elements.metrics.cpm.value) || 0,
+                    retention3s: parseFloat(this.elements.metrics.retention3s.value) || 0,
+                    retention10s: parseFloat(this.elements.metrics.retention10s.value) || 0,
+                    hookRate: parseFloat(this.elements.metrics.hookRate.value) || 0,
+                    cpr: parseFloat(this.elements.metrics.cpr.value) || 0,
+                };
+                this.renderMetricsChart();
+                this.saveState();
+            },
+            renderMetricsChart() {
+                if (typeof Chart === 'undefined' || !this.metricsChart) return;
+                const { ctr, hookRate, retention3s, retention10s } = this.state.metrics;
+                this.metricsChart.data.datasets[0].data = [ctr, hookRate, retention3s, retention10s];
+                this.metricsChart.update();
+            },
+
+            // --- LÓGICA DE HISTORIAL ---
+            historyChart: null,
+            initHistorial() {
+                this.elements.historial = {
+                    chartCanvas: document.getElementById('history-chart'),
+                    tableBody: document.getElementById('history-table-body'),
+                    emptyMsg: document.getElementById('history-empty')
+                };
+                
+                if (typeof Chart !== 'undefined') {
+                    this.initHistoryChart();
+                } else {
+                     console.warn("Chart.js no cargado. Gráfico de Historial desactivado.");
+                    this.elements.historial.chartCanvas.parentElement.innerHTML = '<p class="text-gray-500 text-center">Gráficos desactivados. Se requiere conexión a internet para cargar Chart.js</p>';
+                }
+            },
+            initHistoryChart() {
+                if (typeof Chart === 'undefined') return;
+                if (this.historyChart) this.historyChart.destroy();
+                const ctx = this.elements.historial.chartCanvas.getContext('2d');
+                this.historyChart = new Chart(ctx, { /* ... (definición del gráfico) ... */ });
+            },
+            renderHistorial() {
+                this.renderHistorialTable();
+                this.renderHistorialChart();
+            },
+            renderHistorialTable() {
+                const body = this.elements.historial.tableBody;
+                const emptyMsg = this.elements.historial.emptyMsg;
+                body.innerHTML = '';
+                const history = [...this.state.recordingHistory].reverse();
+                if (history.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    body.style.display = 'none';
+                    return;
+                }
+                emptyMsg.style.display = 'none';
+                body.style.display = 'table-row-group';
+                history.forEach(log => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-gray-700 text-sm';
+                    tr.innerHTML = `
+                        <td class="p-3">${String(log.scene).padStart(3, '0')}</td>
+                        <td class="p-3 font-bold">${String(log.take).padStart(2, '0')}</td>
+                        <td class="p-3 text-gray-300">${log.clientName}</td>
+                        <td class="p-3 text-gray-300">${log.directorName}</td>
+                        <td class="p-3 text-gray-400 truncate" style="max-width: 150px;">${log.title}</td>
+                        <td class="p-3 text-gray-400">${new Date(log.date).toLocaleString('es-ES')}</td>
+                        <td class="p-3 text-gray-300">${log.videoType}</td>
+                        <td class="p-3 text-center">${log.fps}</td>
+                        <td class="p-3 text-center">${log.quality}</td>
+                    </tr>
+                    `;
+                    body.appendChild(tr);
+                });
+            },
+            renderHistorialChart() {
+                if (typeof Chart === 'undefined' || !this.historyChart) return;
+                const clientCounts = {};
+                this.state.recordingHistory.forEach(log => {
+                    clientCounts[log.clientName] = (clientCounts[log.clientName] || 0) + 1;
+                });
+                this.historyChart.data.labels = Object.keys(clientCounts);
+                this.historyChart.data.datasets[0].data = Object.values(clientCounts);
+                this.historyChart.update();
+            },
+            
+            // --- LÓGICA DE MOODBOARD ---
+            initMoodboard() {
+                this.elements.moodboard = {
+                    urlInput: document.getElementById('moodboard-url'),
+                    addBtn: document.getElementById('add-moodboard-image'),
+                    grid: document.getElementById('moodboard-grid'),
+                    emptyMsg: document.getElementById('moodboard-empty'),
+                };
+                this.elements.moodboard.addBtn.addEventListener('click', () => {
+                    const url = this.elements.moodboard.urlInput.value.trim();
+                    if (url) {
+                        this.state.moodboard.push({ id: Date.now(), url: url });
+                        this.elements.moodboard.urlInput.value = '';
+                        this.renderMoodboard();
+                        this.saveState();
+                    }
+                });
+            },
+            renderMoodboard() {
+                const grid = this.elements.moodboard.grid;
+                const emptyMsg = this.elements.moodboard.emptyMsg;
+                grid.innerHTML = '';
+                if (this.state.moodboard.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    return;
+                }
+                emptyMsg.style.display = 'none';
+                this.state.moodboard.forEach(image => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative aspect-square bg-gray-700 rounded-lg overflow-hidden group';
+                    imgContainer.innerHTML = `
+                        <img src="${image.url}" alt="Referencia" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x400/6A0DAD/white?text=Error'">
+                        <button class="absolute top-2 right-2 btn-danger p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" data-img-id="${image.id}">
+                            <ion-icon name="close-outline"></ion-icon>
+                        </button>
+                    `;
+                    imgContainer.querySelector('button').addEventListener('click', (e) => {
+                        this.deleteMoodboardImage(e.currentTarget.dataset.imgId);
+                    });
+                    grid.appendChild(imgContainer);
+                });
+            },
+            deleteMoodboardImage(imgId) {
+                this.state.moodboard = this.state.moodboard.filter(img => img.id != imgId);
+                this.renderMoodboard();
+                this.saveState();
+            },
+            
+            // --- LÓGICA DE MODO CLIENTE ---
+            initClientOnSet() {
+                this.elements.clientMode = {
+                    progressBar: document.getElementById('client-progress-bar'),
+                    progressText: document.getElementById('client-progress-text'),
+                    scenesCompleted: document.getElementById('client-scenes-completed'),
+                    scenesPending: document.getElementById('client-scenes-pending'),
+                    notes: document.getElementById('client-notes'),
+                };
+            },
+            renderClientOnSet() {
+                const totalShots = this.state.shotlist.length;
+                const completedShots = this.state.shotlist.filter(s => s.completed).length;
+                const pendingShots = totalShots - completedShots;
+                const progress = totalShots > 0 ? (completedShots / totalShots) * 100 : 0;
+                this.elements.clientMode.progressBar.style.width = `${progress}%`;
+                this.elements.clientMode.progressText.textContent = `${Math.round(progress)}%`;
+                this.elements.clientMode.scenesCompleted.textContent = completedShots;
+                this.elements.clientMode.scenesPending.textContent = pendingShots;
+            },
+            
+            // --- LÓGICA DE PANTALLA COMPLETA ---
+            initFullscreen() {
+                document.getElementById('fullscreen-app-btn').addEventListener('click', () => {
+                    this.toggleFullscreen(document.documentElement);
+                });
+            },
+            toggleFullscreen(element) {
+                if (!document.fullscreenElement) {
+                    element.requestFullscreen().catch(err => {
+                        console.error(`Error al activar pantalla completa: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            },
+
+            // --- GESTIÓN DE ESTADO (localStorage) ---
+            saveState() {
+                try {
+                    localStorage.setItem('activeMarketingApp', JSON.stringify(this.state));
+                } catch (e) {
+                    console.error("Error al guardar en localStorage (posiblemente lleno):", e);
+                }
+            },
+            loadState() {
+                const savedState = localStorage.getItem('activeMarketingApp');
+                let needsMigration = false;
+                
+                if (savedState) {
+                    try {
+                        this.state = JSON.parse(savedState);
+                    } catch (e) {
+                        console.error("Error al cargar estado, reiniciando al estado por defecto.", e);
+                        // Si hay un error, el estado por defecto (declarado en `app.state`) se usará.
+                    }
+                }
+               
+               // Asegura que el estado base exista después de cargar
+               this.state = this.state || {};
+               // Asignar estado por defecto si falta alguna clave
+               this.state.settings = this.state.settings || { clients: [], directors: [], equipment: [], videoTypes: ['AN (Anuncio)', 'MP (Marca Personal)', 'UGC', 'BSL', 'OTRO...'] };
+               this.state.claqueta = this.state.claqueta || { scene: 1, take: 1, title: 'Título', clientId: '', directorId: '', videoType: 'AN (Anuncio)', fps: '24', quality: 'FHD' };
+               this.state.scripts = this.state.scripts || [];
+               this.state.currentScriptId = this.state.currentScriptId || null;
+               this.state.recordingHistory = this.state.recordingHistory || [];
+               this.state.shoots = this.state.shoots || [];
+               this.state.shotlist = this.state.shotlist || [];
+               this.state.metrics = this.state.metrics || { ctr: 0, cpm: 0, retention3s: 0, retention10s: 0, hookRate: 0, cpr: 0 };
+               this.state.moodboard = this.state.moodboard || [];
+               this.state.config = this.state.config || { countdown: true, colorBars: true };
+               this.state.settings.clients = this.state.settings.clients || [];
+               this.state.settings.directors = this.state.settings.directors || []; 
+               this.state.settings.equipment = this.state.settings.equipment || [];
+               this.state.settings.videoTypes = this.state.settings.videoTypes || ['AN (Anuncio)', 'MP (Marca Personal)', 'UGC', 'BSL', 'OTRO...'];
+               this.state.claqueta.directorId = this.state.claqueta.directorId || ''; 
+               
+               // Migración simple si 'OTRO...' no existe
+               if (!this.state.settings.videoTypes.includes('OTRO...')) {
+                   this.state.settings.videoTypes.push('OTRO...');
+                   needsMigration = true;
+               }
+               
+               if (needsMigration) {
+                   console.log('Migración de estado completada.');
+                   this.saveState();
+               }
+            },
+            
+            // --- GESTIÓN DE BASE DE DATOS (Export/Import) ---
+            exportDatabase() {
+                try {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", `active_marketing_backup_${new Date().toISOString().split('T')[0]}.json`);
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                } catch (e) {
+                    console.error("Error al exportar:", e);
+                    alert("Error al exportar la base de datos.");
+                }
+            },
+            importDatabase(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const newState = JSON.parse(e.target.result);
+                        this.state = newState; // Reemplaza el estado
+                        this.saveState();
+                        this.renderAll(); // Re-renderiza todo
+                        this.navigate(this.state.currentView || 'CLAQUETA', true); // Navega a la vista guardada
+                       alert('¡Base de datos importada con éxito!');
+                    } catch (err) {
+                       console.error('Error al leer el archivo. Asegúrate de que sea un JSON válido.', err);
+                       alert('Error al leer el archivo. Asegúrate de que sea un JSON válido.');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = null; // Resetea el input
+            },
+
+            // --- RENDERIZADO COMPLETO ---
+            renderAll() {
+                try {
+                    this.renderSettings();
+                    this.renderAllDropdowns();
+                    this.renderClaqueta();
+                    this.renderRodajes();
+                    this.renderShotlist();
+                    this.renderGuiones();
+                    this.renderMetrics();
+                    this.renderMoodboard();
+                    this.renderClientOnSet();
+                    this.renderHistorial();
+                } catch(e) {
+                    console.error("Error fatal durante el renderizado completo:", e);
+                    // Si el renderizado falla, es un problema serio
+                    // (ya estamos dentro de un try...catch de init)
+                    throw new Error("Fallo en renderAll(): " + e.message);
+                }
+            },
+            
+            elements: {}
+        };
+
+        // --- INICIO DE LA APP (LÓGICA DE CARGA ROBUSTA) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const preloader = document.getElementById('page-preloader');
+            const preloaderStatus = document.getElementById('preloader-status');
+            
+            try {
+                // 1. Intenta inicializar toda la lógica de la app
+                app.init(); 
+                
+                // 2. Navega a la vista inicial (esto muestra el contenido correcto)
+                app.navigate(app.state.currentView, true);
+
+                // 3. Si todo lo anterior funcionó, oculta el preloader
+                if (preloader) {
+                    setTimeout(() => {
+                        preloader.classList.add('preloader-hidden');
+                        setTimeout(() => {
+                            preloader.style.display = 'none';
+                        }, 500); 
+                    }, 250); 
+                }
+            } catch (e) {
+                // 4. Si ALGO falló durante init() o navigate(),
+                //    la app está rota. NO ocultes el preloader.
+                console.error("Error crítico al iniciar la aplicación:", e);
+                
+                if (preloader) {
+                    // Muestra un mensaje de error en el preloader
+                    const spinner = preloader.querySelector('.preloader-spinner');
+                    if (spinner) spinner.style.display = 'none';
+                    
+                    preloaderStatus.textContent = 'Error: La app no pudo cargar.';
+                    preloaderStatus.style.color = '#EF4444'; // Rojo
+                }
+                
+                // Alerta al usuario
+                alert("Error crítico al iniciar la aplicación. Los datos pueden estar corruptos. " + e.message);
+            }
+        });
+
+    </script>
+</body>
+</html>
+
